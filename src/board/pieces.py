@@ -1,4 +1,5 @@
 import pygame
+from os import chdir
 
 NONE = 0
 KING = 1
@@ -12,6 +13,8 @@ WHITE = 8
 BLACK = 16
 
 def load_pieces():
+    chdir("..")
+
     pieces = {}
 
     pieces[WHITE | KING] = pygame.image.load(f"assets\\{WHITE}_{KING}.png").convert_alpha()
