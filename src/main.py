@@ -1,6 +1,6 @@
 import pygame, sys
 
-from board.board import Board
+from Core.board import Board
 
 pygame.init()
 pygame.display.set_caption("Chess")

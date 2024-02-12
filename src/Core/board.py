@@ -1,7 +1,8 @@
 import pygame
 
-from board.const import *
-from board.pieces import *
+from Core.const import *
+from Core.pieces import *
+from Core.moves import *
 
 class Board:
     def __init__(self):
@@ -19,40 +20,62 @@ class Board:
         self.moved_new = None
         self.moved_indices = [None, None]
 
-    def MouseDrag(self, ):
+        # Logic
+        self.color_to_move = WHITE
+        self.currentPieceMoves = []
+
+        ComputeMoveData()
+        GenerateMoves(self.board, self.color_to_move)
+    
+    
+
+    def MakeMove(self, file, rank):
+        self.board[rank * 8 + file] = self.grabbed_piece
+
+        self.grabbed = False
+        self.grabbed_piece = None
+        
+        self.moved_new = rank * 8 + file
+
+        if self.moved_new != self.moved_old:
+            self.moved = True
+            self.moved_indices[0] = self.moved_old
+            self.moved_indices[1] = self.moved_new
+
+            self.color_to_move = WHITE if self.color_to_move == BLACK else BLACK
+            GenerateMoves(self.board, self.color_to_move)
+        
+        self.currentPieceMoves = []
+
+    def MouseDrag(self):
         if self.grabbed and not pygame.mouse.get_pressed()[0]:
             mouse_x, mouse_y = pygame.mouse.get_pos()
 
-            file = int(mouse_x/(WIDTH/8))
-            rank = 7 - int(mouse_y/(HEIGHT/8))
+            file = int(mouse_x/(BOARD_WIDTH/8))
+            rank = 7 - int(mouse_y/(BOARD_HEIGHT/8))
             
-            self.board[rank * 8 + file] = self.grabbed_piece
-
-            self.grabbed = False
-            self.grabbed_piece = None
-            
-            self.moved_new = rank * 8 + file
-            if self.moved_new != self.moved_old:
-                self.moved = True
-
-                self.moved_indices[0] = self.moved_old
-                self.moved_indices[1] = self.moved_new
+            self.MakeMove(file, rank)
 
         elif pygame.mouse.get_pressed()[0] and not self.grabbed:
             mouse_x, mouse_y = pygame.mouse.get_pos()
 
-            file = int(mouse_x/(WIDTH/8))
-            rank = 7 - int(mouse_y/(HEIGHT/8))
-            square = self.board[rank * 8 + file]
+            file = int(mouse_x/(BOARD_WIDTH/8))
+            rank = 7 - int(mouse_y/(BOARD_HEIGHT/8))
+            piece = self.board[rank * 8 + file]
 
-            if square != None:
+            if piece != None and IsColor(piece, self.color_to_move):
                 self.grabbed = True
-                self.grabbed_piece = square
+                self.grabbed_piece = piece
 
                 self.board[rank * 8 + file] = None
 
                 self.moved_new = None
                 self.moved_old = rank * 8 + file
+
+                # Create legal moves for current piece
+                for move in legalMoves:
+                    if (rank*8+file) == move[0]:
+                        self.currentPieceMoves.append(move[1])
 
 
     def LoadPositionFromFen(self, fen):
@@ -89,22 +112,28 @@ class Board:
 
             color = WHITE_COLOR if (x+y) % 2 == 0 else BLACK_COLOR
 
-            rect = pygame.Rect(x*WIDTH/8, y*HEIGHT/8, WIDTH/8, HEIGHT/8)
+            rect = pygame.Rect(x*BOARD_WIDTH/8, y*BOARD_HEIGHT/8, BOARD_WIDTH/8, BOARD_HEIGHT/8)
             pygame.draw.rect(window, color, rect)
 
+            # Move colors
             if self.moved:
                 if i in self.moved_indices:
-                    move_color = MOVE_COLOR_WHITE if (x+y) % 2 == 0 else MOVE_COLOR_BLACK
+                    move_color = MOVE_COLOR_OLD if i == self.moved_indices[0] else MOVE_COLOR_NEW
                     pygame.draw.rect(window, move_color, rect)
 
-            if square != None:
-                img = pygame.transform.scale(self.pieces[square], (WIDTH/8, HEIGHT/8))
+            # Legal moves
+            if i in self.currentPieceMoves:
+                legal_color = LEGAL_MOVE_COLOR_WHITE if (x+y) % 2 == 0 else LEGAL_MOVE_COLOR_BLACK
+                pygame.draw.rect(window, legal_color, rect)
 
-                window.blit(img, (x*WIDTH/8, y*HEIGHT/8))
+            if square != None:
+                img = pygame.transform.scale(self.pieces[square], (BOARD_WIDTH/8, BOARD_HEIGHT/8))
+
+                window.blit(img, (x*BOARD_WIDTH/8, y*BOARD_HEIGHT/8))
         
         # Mouse grabbed piece
         if self.grabbed:
-            img = pygame.transform.scale(self.pieces[self.grabbed_piece], (WIDTH/8, HEIGHT/8))
+            img = pygame.transform.scale(self.pieces[self.grabbed_piece], (BOARD_WIDTH/8, BOARD_HEIGHT/8))
             mouse_pos = pygame.mouse.get_pos()
 
             window.blit(img, (mouse_pos[0]-img.get_width()/2, mouse_pos[1]-img.get_height()/2))

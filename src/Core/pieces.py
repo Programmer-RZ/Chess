@@ -12,6 +12,25 @@ QUEEN = 6
 WHITE = 8
 BLACK = 16
 
+TYPEMASK = 0b00111
+BLACKMASK = 0b10000
+WHITEMASK = 0b01000
+COLORMASK = WHITEMASK | BLACKMASK
+
+
+def IsColor(piece, color):
+    return (piece & COLORMASK) == color
+
+def IsSlidingPiece(piece):
+    return (piece & 0b100) != 0
+
+def IsBishop(piece):
+    return (piece & TYPEMASK) == 4
+
+def IsRook(piece):
+    return (piece & TYPEMASK) == 5
+
+
 def load_pieces():
     chdir("..")
 
