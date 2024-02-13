@@ -5,6 +5,11 @@ class Move:
     START_SQUARE = None
     TARGET_SQUARE = None
 
+    def __init__(self, START_SQUARE, TARGET_SQUARE):
+        self.START_SQUARE = START_SQUARE
+        self.TARGET_SQUARE = TARGET_SQUARE
+
+
 DIRECTION_OFFSETS = (8, -8, -1, 1, 7, -7, 9, -9)
 NUM_SQUARES_TO_EDGE = [None]*64
 
@@ -32,13 +37,13 @@ def GenerateSlidingMoves(board, color_to_move, startSquare, piece):
             pieceOnTargetSquare = board[targetSquare]
 
             if pieceOnTargetSquare == None:
-                legalMoves.append((startSquare, targetSquare))
+                legalMoves.append(Move(startSquare, targetSquare))
                 continue
 
             if IsColor(pieceOnTargetSquare, color_to_move):
                 break
 
-            legalMoves.append((startSquare, targetSquare))
+            legalMoves.append(Move(startSquare, targetSquare))
 
             if not IsColor(pieceOnTargetSquare, color_to_move):
                 break

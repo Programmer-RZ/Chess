@@ -74,8 +74,8 @@ class Board:
 
                 # Create legal moves for current piece
                 for move in legalMoves:
-                    if (rank*8+file) == move[0]:
-                        self.currentPieceMoves.append(move[1])
+                    if (rank*8+file) == move.START_SQUARE:
+                        self.currentPieceMoves.append(move.TARGET_SQUARE)
 
 
     def LoadPositionFromFen(self, fen):
