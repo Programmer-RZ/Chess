@@ -25,16 +25,19 @@ def IsSlidingPiece(piece):
     return (piece & 0b100) != 0
 
 def IsKing(piece):
-    return (piece & TYPEMASK) == 1
+    return (piece & TYPEMASK) == KING
 
 def IsBishop(piece):
-    return (piece & TYPEMASK) == 4
+    return (piece & TYPEMASK) == BISHOP
 
 def IsRook(piece):
-    return (piece & TYPEMASK) == 5
+    return (piece & TYPEMASK) == ROOK
 
 def IsKnight(piece):
-    return (piece & TYPEMASK) == 3
+    return (piece & TYPEMASK) == KNIGHT
+
+def IsPawn(piece):
+    return (piece & TYPEMASK) == PAWN
 
 
 def load_pieces():

@@ -34,6 +34,41 @@ def GenerateMoves(board, color_to_move):
             if IsKnight(piece):
                 GenerateKnightMoves(board, color_to_move, startSquare)
 
+            if IsPawn(piece):
+                GeneratePawnMoves(board, color_to_move, startSquare)
+
+
+def GeneratePawnMoves(board, color_to_move, startSquare):
+    startRank = 1 if color_to_move == WHITE else 6
+    direction = DIRECTION_OFFSETS[0] if color_to_move == WHITE else DIRECTION_OFFSETS[1]
+    captureDirection = (DIRECTION_OFFSETS[4], DIRECTION_OFFSETS[6]) if color_to_move == WHITE else (DIRECTION_OFFSETS[5], DIRECTION_OFFSETS[7])
+
+    currentRank = (startSquare - startSquare % 8) / 8
+
+    # Double move
+    if currentRank == startRank:
+        targetSquare = startSquare + direction * 2
+        pieceOnTargetSquare = board[targetSquare]
+
+        if pieceOnTargetSquare == None or not IsColor(pieceOnTargetSquare, color_to_move):
+            legalMoves.append(Move(startSquare, targetSquare))
+    
+    # Regular move
+    targetSquare = startSquare + direction
+    pieceOnTargetSquare = board[targetSquare]
+
+    if pieceOnTargetSquare == None or not IsColor(pieceOnTargetSquare, color_to_move):
+        legalMoves.append(Move(startSquare, targetSquare))
+    
+    # Capture
+    for dir in captureDirection:
+        targetSquare = startSquare + dir
+        pieceOnTargetSquare = board[targetSquare]
+
+        if pieceOnTargetSquare != None and not IsColor(pieceOnTargetSquare, color_to_move):
+            legalMoves.append(Move(startSquare, targetSquare))
+
+
 def GenerateKnightMoves(board, color_to_move, startSquare):
     knightDirectionOffsets = [
         15,

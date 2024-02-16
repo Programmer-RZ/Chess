@@ -30,6 +30,13 @@ class Board:
     
 
     def MakeMove(self, file, rank):
+        if (rank * 8 + file) not in self.currentPieceMoves:
+            self.board[self.moved_old] = self.grabbed_piece
+            self.grabbed = False
+            self.grabbed_piece = None
+            self.currentPieceMoves = []
+            return
+        
         self.board[rank * 8 + file] = self.grabbed_piece
 
         self.grabbed = False
