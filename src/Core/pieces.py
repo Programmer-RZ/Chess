@@ -24,11 +24,17 @@ def IsColor(piece, color):
 def IsSlidingPiece(piece):
     return (piece & 0b100) != 0
 
+def IsKing(piece):
+    return (piece & TYPEMASK) == 1
+
 def IsBishop(piece):
     return (piece & TYPEMASK) == 4
 
 def IsRook(piece):
     return (piece & TYPEMASK) == 5
+
+def IsKnight(piece):
+    return (piece & TYPEMASK) == 3
 
 
 def load_pieces():

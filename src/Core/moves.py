@@ -23,9 +23,56 @@ def GenerateMoves(board, color_to_move):
         piece = board[startSquare]
         if piece == None:
             continue
+
         if IsColor(piece, color_to_move):
             if IsSlidingPiece(piece):
                 GenerateSlidingMoves(board, color_to_move, startSquare, piece)
+            
+            if IsKing(piece):
+                GenerateKingMoves(board, color_to_move, startSquare)
+            
+            if IsKnight(piece):
+                GenerateKnightMoves(board, color_to_move, startSquare)
+
+def GenerateKnightMoves(board, color_to_move, startSquare):
+    knightDirectionOffsets = [
+        15,
+        17,
+        6,
+        -10,
+        10,
+        -6,
+        -17,
+        -15
+    ]
+
+    for directionIndex in range(0, 8):
+        targetSquare = startSquare + knightDirectionOffsets[directionIndex]
+
+        if targetSquare < 0 or targetSquare > 63:
+            continue
+
+        pieceOnTargetSquare = board[targetSquare]
+
+        startSquareColor = ((startSquare % 8) + (7 - (startSquare - startSquare % 8) / 8)) % 2
+        targetSquareColor = ((targetSquare % 8) + (7 - (targetSquare - targetSquare % 8) / 8)) % 2
+        isSameColorSquare = startSquareColor == targetSquareColor
+
+        if not isSameColorSquare and (pieceOnTargetSquare == None or not IsColor(pieceOnTargetSquare, color_to_move)):
+            legalMoves.append(Move(startSquare, targetSquare))
+
+def GenerateKingMoves(board, color_to_move, startSquare):
+    for directionIndex in range(0, 8):
+        targetSquare = startSquare + DIRECTION_OFFSETS[directionIndex]
+
+        if targetSquare < 0 or targetSquare > 63:
+            continue
+
+        pieceOnTargetSquare = board[targetSquare]
+
+        if pieceOnTargetSquare == None or not IsColor(pieceOnTargetSquare, color_to_move):
+            legalMoves.append(Move(startSquare, targetSquare))
+
     
 def GenerateSlidingMoves(board, color_to_move, startSquare, piece):
     startDirIndex = 4 if IsBishop(piece) else 0
