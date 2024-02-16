@@ -2,7 +2,8 @@ import pygame
 
 from Core.const import *
 from Core.pieces import *
-from Core.moves import *
+from Core.moveGenerator import *
+from Core.boardRepresentation import *
 
 class Board:
     def __init__(self):
@@ -24,8 +25,17 @@ class Board:
         self.color_to_move = WHITE
         self.currentPieceMoves = []
 
-        ComputeMoveData()
-        GenerateMoves(self.board, self.color_to_move)
+        # Castling
+        '''
+        Left bit represents queenside castling
+        Right bit represents kingside castling
+        '''
+        self.BlackCastleState = 0b11
+        self.WhiteCastleState = 0b11
+
+        # Move generation
+        self.MoveGenerator = MoveGenerator()
+        self.MoveGenerator.GenerateMoves(self)
     
     
 
@@ -50,7 +60,7 @@ class Board:
             self.moved_indices[1] = self.moved_new
 
             self.color_to_move = WHITE if self.color_to_move == BLACK else BLACK
-            GenerateMoves(self.board, self.color_to_move)
+            self.MoveGenerator.GenerateMoves(self)
         
         self.currentPieceMoves = []
 
@@ -80,7 +90,7 @@ class Board:
                 self.moved_old = rank * 8 + file
 
                 # Create legal moves for current piece
-                for move in legalMoves:
+                for move in self.MoveGenerator.legalMoves:
                     if (rank*8+file) == move.START_SQUARE:
                         self.currentPieceMoves.append(move.TARGET_SQUARE)
 
@@ -114,8 +124,8 @@ class Board:
     def draw(self, window):
         # Board
         for i, square in enumerate(self.board):
-            x = i % 8
-            y = 7 - (i - x) / 8
+            x = BoardRepresentation.FileIndex(i)
+            y = 7 - BoardRepresentation.RankIndex(i)
 
             color = WHITE_COLOR if (x+y) % 2 == 0 else BLACK_COLOR
 
