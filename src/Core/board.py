@@ -39,30 +39,46 @@ class Board:
     
     
 
-    def MakeMove(self, file, rank):
-        if (rank * 8 + file) not in self.currentPieceMoves:
-            self.board[self.moved_old] = self.grabbed_piece
-            self.grabbed = False
-            self.grabbed_piece = None
-            self.currentPieceMoves = []
-            return
-        
-        self.board[rank * 8 + file] = self.grabbed_piece
+    def MakeMove(self, move):
+        moveFrom = move.START_SQUARE
+        moveTo = move.TARGET_SQUARE
+        moveFlag = move.FLAG
 
-        self.grabbed = False
-        self.grabbed_piece = None
-        
-        self.moved_new = rank * 8 + file
+        self.board[moveTo] = self.grabbed_piece
 
-        if self.moved_new != self.moved_old:
-            self.moved = True
-            self.moved_indices[0] = self.moved_old
-            self.moved_indices[1] = self.moved_new
+        # Special moves
+        if moveFlag == Move.CASTLING_FLAG:
+            # Kingside
+            if moveTo == BoardRepresentation.g1 or moveTo == BoardRepresentation.g8:
+                self.board[moveTo+1] = None
+                self.board[moveTo-1] = self.color_to_move | ROOK
+            
+            # Queenside
+            if moveTo == BoardRepresentation.c1 or moveTo == BoardRepresentation.c8:
+                self.board[moveTo-2] = None
+                self.board[moveTo+1] = self.color_to_move | ROOK
 
-            self.color_to_move = WHITE if self.color_to_move == BLACK else BLACK
-            self.MoveGenerator.GenerateMoves(self)
+
+        # Update castle state
+        if self.grabbed_piece == KING:
+            if self.color_to_move == WHITE:
+                self.WhiteCastleState &= 0b00
+            else:
+                self.BlackCastleState &= 0b00
         
-        self.currentPieceMoves = []
+        # White castling state
+        if moveFrom == BoardRepresentation.h1 or moveTo == BoardRepresentation.h1:
+            self.WhiteCastleState &= 0b01
+        elif moveFrom == BoardRepresentation.a1 or moveTo == BoardRepresentation.a1:
+            self.WhiteCastleState &= 0b10
+
+        # Black castling state
+        if moveFrom == BoardRepresentation.h8 or moveTo == BoardRepresentation.h8:
+            self.BlackCastleState &= 0b01
+        elif moveFrom == BoardRepresentation.a8 or moveTo == BoardRepresentation.a8:
+            self.BlackCastleState &= 0b10
+        
+        
 
     def MouseDrag(self):
         if self.grabbed and not pygame.mouse.get_pressed()[0]:
@@ -70,8 +86,33 @@ class Board:
 
             file = int(mouse_x/(BOARD_WIDTH/8))
             rank = 7 - int(mouse_y/(BOARD_HEIGHT/8))
+
+            if (rank * 8 + file) not in self.currentPieceMoves:
+                self.board[self.moved_old] = self.grabbed_piece
+                self.grabbed = False
+                self.grabbed_piece = None
+                self.currentPieceMoves = []
+                return
             
-            self.MakeMove(file, rank)
+            for move in self.MoveGenerator.legalMoves:
+                if move.START_SQUARE == self.moved_old and move.TARGET_SQUARE == (rank * 8 + file):
+                    self.MakeMove(move)
+                    break
+            
+            self.grabbed = False
+            self.grabbed_piece = None
+            
+            self.moved_new = rank * 8 + file
+
+            if self.moved_new != self.moved_old:
+                self.moved = True
+                self.moved_indices[0] = self.moved_old
+                self.moved_indices[1] = self.moved_new
+
+                self.color_to_move = WHITE if self.color_to_move == BLACK else BLACK
+                self.MoveGenerator.GenerateMoves(self)
+
+            self.currentPieceMoves = []
 
         elif pygame.mouse.get_pressed()[0] and not self.grabbed:
             mouse_x, mouse_y = pygame.mouse.get_pos()

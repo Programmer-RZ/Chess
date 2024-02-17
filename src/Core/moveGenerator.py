@@ -112,7 +112,7 @@ class MoveGenerator:
                     castleKingSideSquare = targetSquare + 1
                     if board.board[castleKingSideSquare] == None:
                         castleMove = Move(startSquare, castleKingSideSquare)
-                        castleMove.flag = Move.CASTLING_FLAG
+                        castleMove.FLAG = Move.CASTLING_FLAG
                         self.legalMoves.append(castleMove)
                 
                 # Castle queenside
@@ -120,7 +120,7 @@ class MoveGenerator:
                     castleQueenSideSquare = targetSquare - 1
                     if board.board[castleQueenSideSquare] == None and board.board[castleQueenSideSquare-1] == None:
                         castleMove = Move(startSquare, castleQueenSideSquare)
-                        castleMove.flag = Move.CASTLING_FLAG
+                        castleMove.FLAG = Move.CASTLING_FLAG
                         self.legalMoves.append(castleMove)
 
         

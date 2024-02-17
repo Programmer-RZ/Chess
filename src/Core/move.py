@@ -8,4 +8,4 @@ class Move:
     def __init__(self, START_SQUARE, TARGET_SQUARE):
         self.START_SQUARE = START_SQUARE
         self.TARGET_SQUARE = TARGET_SQUARE
-        self.flag = None
+        self.FLAG = None

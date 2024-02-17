@@ -14,8 +14,8 @@ class BoardRepresentation:
     d8 = 59
     e8 = 60
     f8 = 61
-    g1 = 62
-    h1 = 63
+    g8 = 62
+    h8 = 63
 
     def RankIndex(square):
         return square >> 3
