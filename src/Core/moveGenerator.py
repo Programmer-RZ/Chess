@@ -34,7 +34,7 @@ class MoveGenerator:
                     self.GenerateKnightMoves(board.board, color_to_move, startSquare)
 
                 if IsPawn(piece):
-                    self.GeneratePawnMoves(board.board, color_to_move, startSquare)
+                    self.GeneratePawnMoves(board, color_to_move, startSquare)
 
 
     def GeneratePawnMoves(self, board, color_to_move, startSquare):
@@ -44,17 +44,48 @@ class MoveGenerator:
 
         currentRank = (startSquare - startSquare % 8) / 8
 
+        # En passant
+        if color_to_move == WHITE:
+            if BoardRepresentation.RankIndex(startSquare) == 4:
+                if (startSquare+1) in board.doublePawnMoves:
+                    if board.board[startSquare+9] == None:
+                        enPassantMove = Move(startSquare, startSquare+9)
+                        enPassantMove.FLAG = Move.EN_PASSANT_FLAG
+                        self.legalMoves.append(enPassantMove)
+
+                elif (startSquare-1) in board.doublePawnMoves:
+                    if board.board[startSquare+7] == None:
+                        enPassantMove = Move(startSquare, startSquare+7)
+                        enPassantMove.FLAG = Move.EN_PASSANT_FLAG
+                        self.legalMoves.append(enPassantMove)
+        
+        elif color_to_move == BLACK:
+            if BoardRepresentation.RankIndex(startSquare) == 3:
+                if (startSquare+1) in board.doublePawnMoves:
+                    if board.board[startSquare-9] == None:
+                        enPassantMove = Move(startSquare, startSquare-9)
+                        enPassantMove.FLAG = Move.EN_PASSANT_FLAG
+                        self.legalMoves.append(enPassantMove)
+
+                elif (startSquare-1) in board.doublePawnMoves:
+                    if board.board[startSquare-7] == None:
+                        enPassantMove = Move(startSquare, startSquare-7)
+                        enPassantMove.FLAG = Move.EN_PASSANT_FLAG
+                        self.legalMoves.append(enPassantMove)
+
         # Double move
         if currentRank == startRank:
             targetSquare = startSquare + direction * 2
-            pieceOnTargetSquare = board[targetSquare]
+            pieceOnTargetSquare = board.board[targetSquare]
 
             if pieceOnTargetSquare == None or not IsColor(pieceOnTargetSquare, color_to_move):
-                self.legalMoves.append(Move(startSquare, targetSquare))
+                doubleMove = Move(startSquare, targetSquare)
+                doubleMove.FLAG = Move.DOUBLE_PAWN_MOVE
+                self.legalMoves.append(doubleMove)
         
         # Regular move
         targetSquare = startSquare + direction
-        pieceOnTargetSquare = board[targetSquare]
+        pieceOnTargetSquare = board.board[targetSquare]
 
         if pieceOnTargetSquare == None or not IsColor(pieceOnTargetSquare, color_to_move):
             self.legalMoves.append(Move(startSquare, targetSquare))
@@ -62,7 +93,7 @@ class MoveGenerator:
         # Capture
         for dir in captureDirection:
             targetSquare = startSquare + dir
-            pieceOnTargetSquare = board[targetSquare]
+            pieceOnTargetSquare = board.board[targetSquare]
 
             if pieceOnTargetSquare != None and not IsColor(pieceOnTargetSquare, color_to_move):
                 self.legalMoves.append(Move(startSquare, targetSquare))

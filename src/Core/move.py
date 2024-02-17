@@ -4,6 +4,7 @@ class Move:
 
     EN_PASSANT_FLAG = 1
     CASTLING_FLAG = 2
+    DOUBLE_PAWN_MOVE = 3
 
     def __init__(self, START_SQUARE, TARGET_SQUARE):
         self.START_SQUARE = START_SQUARE

@@ -33,6 +33,9 @@ class Board:
         self.BlackCastleState = 0b11
         self.WhiteCastleState = 0b11
 
+        # En passant
+        self.doublePawnMoves = []
+
         # Move generation
         self.MoveGenerator = MoveGenerator()
         self.MoveGenerator.GenerateMoves(self)
@@ -46,6 +49,8 @@ class Board:
 
         self.board[moveTo] = self.grabbed_piece
 
+        self.doublePawnMoves = []
+
         # Special moves
         if moveFlag == Move.CASTLING_FLAG:
             # Kingside
@@ -57,6 +62,15 @@ class Board:
             if moveTo == BoardRepresentation.c1 or moveTo == BoardRepresentation.c8:
                 self.board[moveTo-2] = None
                 self.board[moveTo+1] = self.color_to_move | ROOK
+
+        elif moveFlag == Move.DOUBLE_PAWN_MOVE:
+            self.doublePawnMoves.append(moveTo)
+        
+        elif moveFlag == Move.EN_PASSANT_FLAG:
+            if self.color_to_move == WHITE:
+                self.board[moveTo-8] = None
+            elif self.color_to_move == BLACK:
+                self.board[moveTo+8] = None
 
 
         # Update castle state
