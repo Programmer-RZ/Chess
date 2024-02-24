@@ -13,8 +13,28 @@ class MoveGenerator:
         self.ComputeMoveData()
 
 
-    def GenerateMoves(self, board):
+    def GenerateLegalMoves(self, board):
+        pseudoLegalMoves = self.GenerateMoves(board)
         self.legalMoves = []
+
+        color_to_move = board.color_to_move
+        myKingSquare = board.board.index(color_to_move | KING)
+
+        for moveToVerify in pseudoLegalMoves:
+            board.MakeMove(moveToVerify)
+            myKingSquare = board.board.index(color_to_move | KING)
+
+            opponentResponses = self.GenerateMoves(board)
+
+            if not any(response.TARGET_SQUARE == myKingSquare for response in opponentResponses):
+                self.legalMoves.append(moveToVerify)
+            
+            board.UnmakeMove(moveToVerify)
+
+
+
+    def GenerateMoves(self, board):
+        moves = []
 
         color_to_move = board.color_to_move
 
@@ -25,19 +45,21 @@ class MoveGenerator:
 
             if IsColor(piece, color_to_move):
                 if IsSlidingPiece(piece):
-                    self.GenerateSlidingMoves(board.board, color_to_move, startSquare, piece)
+                    self.GenerateSlidingMoves(moves, board.board, color_to_move, startSquare, piece)
                 
                 if IsKing(piece):
-                    self.GenerateKingMoves(board, color_to_move, startSquare)
+                    self.GenerateKingMoves(moves, board, color_to_move, startSquare)
                 
                 if IsKnight(piece):
-                    self.GenerateKnightMoves(board.board, color_to_move, startSquare)
+                    self.GenerateKnightMoves(moves, board.board, color_to_move, startSquare)
 
                 if IsPawn(piece):
-                    self.GeneratePawnMoves(board, color_to_move, startSquare)
+                    self.GeneratePawnMoves(moves, board, color_to_move, startSquare)
+        
+        return moves
 
 
-    def GeneratePawnMoves(self, board, color_to_move, startSquare):
+    def GeneratePawnMoves(self, moves, board, color_to_move, startSquare):
         startRank = 1 if color_to_move == WHITE else 6
         direction = self.DIRECTION_OFFSETS[0] if color_to_move == WHITE else self.DIRECTION_OFFSETS[1]
         captureDirection = (self.DIRECTION_OFFSETS[4], self.DIRECTION_OFFSETS[6]) if color_to_move == WHITE else (self.DIRECTION_OFFSETS[5], self.DIRECTION_OFFSETS[7])
@@ -50,45 +72,50 @@ class MoveGenerator:
                 if (startSquare+1) in board.doublePawnMoves:
                     if board.board[startSquare+9] == None:
                         enPassantMove = Move(startSquare, startSquare+9)
-                        enPassantMove.FLAG = Move.EN_PASSANT_FLAG
-                        self.legalMoves.append(enPassantMove)
+                        enPassantMove.FLAG = Move.EN_PASSANT
+                        moves.append(enPassantMove)
 
                 elif (startSquare-1) in board.doublePawnMoves:
                     if board.board[startSquare+7] == None:
                         enPassantMove = Move(startSquare, startSquare+7)
-                        enPassantMove.FLAG = Move.EN_PASSANT_FLAG
-                        self.legalMoves.append(enPassantMove)
+                        enPassantMove.FLAG = Move.EN_PASSANT
+                        moves.append(enPassantMove)
         
         elif color_to_move == BLACK:
             if BoardRepresentation.RankIndex(startSquare) == 3:
                 if (startSquare+1) in board.doublePawnMoves:
                     if board.board[startSquare-9] == None:
                         enPassantMove = Move(startSquare, startSquare-9)
-                        enPassantMove.FLAG = Move.EN_PASSANT_FLAG
-                        self.legalMoves.append(enPassantMove)
+                        enPassantMove.FLAG = Move.EN_PASSANT
+                        moves.append(enPassantMove)
 
                 elif (startSquare-1) in board.doublePawnMoves:
                     if board.board[startSquare-7] == None:
                         enPassantMove = Move(startSquare, startSquare-7)
-                        enPassantMove.FLAG = Move.EN_PASSANT_FLAG
-                        self.legalMoves.append(enPassantMove)
+                        enPassantMove.FLAG = Move.EN_PASSANT
+                        moves.append(enPassantMove)
 
         # Double move
         if currentRank == startRank:
             targetSquare = startSquare + direction * 2
             pieceOnTargetSquare = board.board[targetSquare]
 
-            if pieceOnTargetSquare == None or not IsColor(pieceOnTargetSquare, color_to_move):
+            if pieceOnTargetSquare == None:
                 doubleMove = Move(startSquare, targetSquare)
                 doubleMove.FLAG = Move.DOUBLE_PAWN_MOVE
-                self.legalMoves.append(doubleMove)
+                moves.append(doubleMove)
         
         # Regular move
         targetSquare = startSquare + direction
         pieceOnTargetSquare = board.board[targetSquare]
 
-        if pieceOnTargetSquare == None or not IsColor(pieceOnTargetSquare, color_to_move):
-            self.legalMoves.append(Move(startSquare, targetSquare))
+        if pieceOnTargetSquare == None:
+            move = Move(startSquare, targetSquare)
+            # Promotion
+            if BoardRepresentation.RankIndex(targetSquare) == 7 or BoardRepresentation.RankIndex(targetSquare) == 0:
+                move.FLAG = Move.PROMOTION
+
+            moves.append(move)
         
         # Capture
         for dir in captureDirection:
@@ -96,10 +123,16 @@ class MoveGenerator:
             pieceOnTargetSquare = board.board[targetSquare]
 
             if pieceOnTargetSquare != None and not IsColor(pieceOnTargetSquare, color_to_move):
-                self.legalMoves.append(Move(startSquare, targetSquare))
+                move = Move(startSquare, targetSquare)
+                move.CAPTURED_PIECE = pieceOnTargetSquare
+                # Promotion
+                if BoardRepresentation.RankIndex(targetSquare) == 7 or BoardRepresentation.RankIndex(targetSquare) == 0:
+                    move.FLAG = Move.PROMOTION
+
+                moves.append(move)
 
 
-    def GenerateKnightMoves(self, board, color_to_move, startSquare):
+    def GenerateKnightMoves(self, moves, board, color_to_move, startSquare):
         knightDirectionOffsets = [
             15,
             17,
@@ -124,9 +157,14 @@ class MoveGenerator:
             isSameColorSquare = startSquareColor == targetSquareColor
 
             if not isSameColorSquare and (pieceOnTargetSquare == None or not IsColor(pieceOnTargetSquare, color_to_move)):
-                self.legalMoves.append(Move(startSquare, targetSquare))
+                move = Move(startSquare, targetSquare)
+                # Capture
+                if pieceOnTargetSquare != None:
+                    move.CAPTURED_PIECE = pieceOnTargetSquare
+                
+                moves.append(move)
 
-    def GenerateKingMoves(self, board, color_to_move, startSquare):
+    def GenerateKingMoves(self, moves, board, color_to_move, startSquare):
         for directionIndex in range(0, 8):
             targetSquare = startSquare + self.DIRECTION_OFFSETS[directionIndex]
 
@@ -136,26 +174,30 @@ class MoveGenerator:
             pieceOnTargetSquare = board.board[targetSquare]
 
             if pieceOnTargetSquare == None or not IsColor(pieceOnTargetSquare, color_to_move):
-                self.legalMoves.append(Move(startSquare, targetSquare))
+                move = Move(startSquare, targetSquare)
+                # Capture
+                if pieceOnTargetSquare != None:
+                    move.CAPTURED_PIECE = pieceOnTargetSquare
+                moves.append(move)
 
                 # Castle kingside
                 if (targetSquare == BoardRepresentation.f1 or targetSquare == BoardRepresentation.f8) and self.HasKingsideCastleRight(board, color_to_move):
                     castleKingSideSquare = targetSquare + 1
                     if board.board[castleKingSideSquare] == None:
                         castleMove = Move(startSquare, castleKingSideSquare)
-                        castleMove.FLAG = Move.CASTLING_FLAG
-                        self.legalMoves.append(castleMove)
+                        castleMove.FLAG = Move.CASTLING
+                        moves.append(castleMove)
                 
                 # Castle queenside
                 if (targetSquare == BoardRepresentation.d1 or targetSquare == BoardRepresentation.d8) and self.HasQueensideCastleRight(board, color_to_move):
                     castleQueenSideSquare = targetSquare - 1
                     if board.board[castleQueenSideSquare] == None and board.board[castleQueenSideSquare-1] == None:
                         castleMove = Move(startSquare, castleQueenSideSquare)
-                        castleMove.FLAG = Move.CASTLING_FLAG
-                        self.legalMoves.append(castleMove)
+                        castleMove.FLAG = Move.CASTLING
+                        moves.append(castleMove)
 
         
-    def GenerateSlidingMoves(self, board, color_to_move, startSquare, piece):
+    def GenerateSlidingMoves(self, moves, board, color_to_move, startSquare, piece):
         startDirIndex = 4 if IsBishop(piece) else 0
         endDirIndex = 4 if IsRook(piece) else 8
 
@@ -165,13 +207,16 @@ class MoveGenerator:
                 pieceOnTargetSquare = board[targetSquare]
 
                 if pieceOnTargetSquare == None:
-                    self.legalMoves.append(Move(startSquare, targetSquare))
+                    moves.append(Move(startSquare, targetSquare))
                     continue
 
                 if IsColor(pieceOnTargetSquare, color_to_move):
                     break
-
-                self.legalMoves.append(Move(startSquare, targetSquare))
+                
+                # Capture
+                move = Move(startSquare, targetSquare)
+                move.CAPTURED_PIECE = pieceOnTargetSquare
+                moves.append(move)
 
                 if not IsColor(pieceOnTargetSquare, color_to_move):
                     break

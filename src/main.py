@@ -25,6 +25,7 @@ def main():
 
         screen.fill((0, 0, 0))
         board.draw(screen)
+        
         pygame.display.update()
 
 if __name__ == "__main__":

@@ -38,21 +38,19 @@ class Board:
 
         # Move generation
         self.MoveGenerator = MoveGenerator()
-        self.MoveGenerator.GenerateMoves(self)
-    
-    
+        self.MoveGenerator.GenerateLegalMoves(self)
 
     def MakeMove(self, move):
         moveFrom = move.START_SQUARE
         moveTo = move.TARGET_SQUARE
         moveFlag = move.FLAG
 
-        self.board[moveTo] = self.grabbed_piece
+        self.board[moveTo] = self.board[moveFrom] if self.grabbed_piece == None else self.grabbed_piece
 
         self.doublePawnMoves = []
 
         # Special moves
-        if moveFlag == Move.CASTLING_FLAG:
+        if moveFlag == Move.CASTLING:
             # Kingside
             if moveTo == BoardRepresentation.g1 or moveTo == BoardRepresentation.g8:
                 self.board[moveTo+1] = None
@@ -66,11 +64,14 @@ class Board:
         elif moveFlag == Move.DOUBLE_PAWN_MOVE:
             self.doublePawnMoves.append(moveTo)
         
-        elif moveFlag == Move.EN_PASSANT_FLAG:
+        elif moveFlag == Move.EN_PASSANT:
             if self.color_to_move == WHITE:
                 self.board[moveTo-8] = None
             elif self.color_to_move == BLACK:
                 self.board[moveTo+8] = None
+        
+        elif moveFlag == Move.PROMOTION:
+            self.board[moveTo] = self.color_to_move | QUEEN
 
 
         # Update castle state
@@ -91,7 +92,23 @@ class Board:
             self.BlackCastleState &= 0b01
         elif moveFrom == BoardRepresentation.a8 or moveTo == BoardRepresentation.a8:
             self.BlackCastleState &= 0b10
-        
+
+        # Switch move color
+        self.color_to_move = WHITE if self.color_to_move == BLACK else BLACK
+    
+
+    def UnmakeMove(self, move):
+        moveFrom = move.START_SQUARE
+        moveTo = move.TARGET_SQUARE
+        moveFlag = move.FLAG
+        moveCapture = move.CAPTURED_PIECE
+
+        self.board[moveFrom] = self.board[moveTo]
+        self.board[moveTo] = moveCapture
+
+        # Switch move color
+        self.color_to_move = WHITE if self.color_to_move == BLACK else BLACK
+
         
 
     def MouseDrag(self):
@@ -123,8 +140,7 @@ class Board:
                 self.moved_indices[0] = self.moved_old
                 self.moved_indices[1] = self.moved_new
 
-                self.color_to_move = WHITE if self.color_to_move == BLACK else BLACK
-                self.MoveGenerator.GenerateMoves(self)
+                self.MoveGenerator.GenerateLegalMoves(self)
 
             self.currentPieceMoves = []
 
