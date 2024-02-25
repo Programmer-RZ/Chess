@@ -21,7 +21,7 @@ class MoveGenerator:
         myKingSquare = board.board.index(color_to_move | KING)
 
         for moveToVerify in pseudoLegalMoves:
-            board.MakeMove(moveToVerify)
+            board.MakeMove(moveToVerify, True)
             myKingSquare = board.board.index(color_to_move | KING)
 
             opponentResponses = self.GenerateMoves(board)
@@ -30,8 +30,6 @@ class MoveGenerator:
                 self.legalMoves.append(moveToVerify)
             
             board.UnmakeMove(moveToVerify)
-
-
 
     def GenerateMoves(self, board):
         moves = []

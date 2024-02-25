@@ -40,7 +40,7 @@ class Board:
         self.MoveGenerator = MoveGenerator()
         self.MoveGenerator.GenerateLegalMoves(self)
 
-    def MakeMove(self, move):
+    def MakeMove(self, move, generatingMoves=False):
         moveFrom = move.START_SQUARE
         moveTo = move.TARGET_SQUARE
         moveFlag = move.FLAG
@@ -60,6 +60,11 @@ class Board:
             if moveTo == BoardRepresentation.c1 or moveTo == BoardRepresentation.c8:
                 self.board[moveTo-2] = None
                 self.board[moveTo+1] = self.color_to_move | ROOK
+            
+            if self.color_to_move == WHITE:
+                self.WhiteCastleState = 0b00
+            else:
+                self.BlackCastleState = 0b00
 
         elif moveFlag == Move.DOUBLE_PAWN_MOVE:
             self.doublePawnMoves.append(moveTo)
@@ -83,15 +88,19 @@ class Board:
         
         # White castling state
         if moveFrom == BoardRepresentation.h1 or moveTo == BoardRepresentation.h1:
-            self.WhiteCastleState &= 0b01
+            if not generatingMoves:
+                self.WhiteCastleState &= 0b01
         elif moveFrom == BoardRepresentation.a1 or moveTo == BoardRepresentation.a1:
-            self.WhiteCastleState &= 0b10
+            if not generatingMoves:
+                self.WhiteCastleState &= 0b10
 
         # Black castling state
         if moveFrom == BoardRepresentation.h8 or moveTo == BoardRepresentation.h8:
-            self.BlackCastleState &= 0b01
+            if not generatingMoves:
+                self.BlackCastleState &= 0b01
         elif moveFrom == BoardRepresentation.a8 or moveTo == BoardRepresentation.a8:
-            self.BlackCastleState &= 0b10
+            if not generatingMoves:
+                self.BlackCastleState &= 0b10
 
         # Switch move color
         self.color_to_move = WHITE if self.color_to_move == BLACK else BLACK
@@ -103,11 +112,30 @@ class Board:
         moveFlag = move.FLAG
         moveCapture = move.CAPTURED_PIECE
 
+        # Switch move color
+        self.color_to_move = WHITE if self.color_to_move == BLACK else BLACK
+
         self.board[moveFrom] = self.board[moveTo]
         self.board[moveTo] = moveCapture
 
-        # Switch move color
-        self.color_to_move = WHITE if self.color_to_move == BLACK else BLACK
+        if moveFlag == Move.CASTLING:
+            if moveTo == BoardRepresentation.g1 or moveTo == BoardRepresentation.g8:
+                self.board[moveTo+1] = self.color_to_move | ROOK
+                self.board[moveTo-1] = None
+
+                if self.color_to_move == WHITE:
+                    self.WhiteCastleState |= 0b01
+                else:
+                    self.BlackCastleState |= 0b01
+                
+            elif moveTo == BoardRepresentation.c1 or moveTo == BoardRepresentation.c8:
+                self.board[moveTo-2] = self.color_to_move | ROOK
+                self.board[moveTo+1] = None
+
+                if self.color_to_move == WHITE:
+                    self.WhiteCastleState |= 0b10
+                else:
+                    self.BlackCastleState |= 0b10
 
         
 
